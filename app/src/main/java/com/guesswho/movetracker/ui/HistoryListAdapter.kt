@@ -13,7 +13,10 @@ import java.util.*
  *
  * @author Maxim on 2020-02-10
  */
-class HistoryListAdapter(private val items: List<LocationHistory>) :
+class HistoryListAdapter(
+    private val items: List<LocationHistory>,
+    val onSelected: (LocationHistory) -> Unit
+) :
     RecyclerView.Adapter<HistoryListAdapter.HistoryViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, p1: Int) = HistoryViewHolder(
@@ -24,7 +27,7 @@ class HistoryListAdapter(private val items: List<LocationHistory>) :
     override fun onBindViewHolder(holder: HistoryViewHolder, position: Int) {
         holder.itemView.apply {
             setOnClickListener {
-
+                onSelected(items[position])
             }
         }.let { rootView ->
             rootView.tv_dummy_title.text = items[position].session

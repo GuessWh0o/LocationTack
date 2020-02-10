@@ -7,33 +7,36 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_COLLAPSED
 import com.guesswho.movetracker.BackgroundLocationTrackingService
-import com.guesswho.movetracker.HistoryViewerActivty
 import com.guesswho.movetracker.R
 import com.guesswho.movetracker.data.SelectedAddressInfo
 import com.guesswho.movetracker.database.LocationHistoryDatabase
 import com.guesswho.movetracker.location.livedata.LocationData
 import com.guesswho.movetracker.location.livedata.LocationLiveData
 import com.guesswho.movetracker.location.map.GoogleMapController
-import com.guesswho.movetracker.ui.view.LocationMarkerView
 import com.guesswho.movetracker.util.Coroutines
 import com.guesswho.movetracker.util.PermissionUtils
 import kotlinx.android.synthetic.main.activity_easy_maps.*
 import java.util.*
 
 
-class EasyMapsActivity : AppCompatActivity() {
+class Mapfragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var googleMapController: GoogleMapController
 
@@ -43,26 +46,42 @@ class EasyMapsActivity : AppCompatActivity() {
 
     private var isMapsInitialized = false
 
-    private var bottomSheetState = STATE_COLLAPSED
-
-    private val db by lazy { LocationHistoryDatabase(this) }
+    private val db by lazy { LocationHistoryDatabase(mContext) }
 
     private val backgroundLocationTrackingServiceIntent by lazy {
         Intent(
-            this,
+            activity,
             BackgroundLocationTrackingService::class.java
         )
     }
 
-    @SuppressLint("CheckResult")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_easy_maps)
+    private lateinit var navController: NavController
 
+    private lateinit var mContext: Context
+
+    private lateinit var mapView: MapView
+    private lateinit var googleMap: GoogleMap
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        mContext = context
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.activity_easy_maps, container, false)
+    }
+
+    @SuppressLint("CheckResult")
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         easyMapsViewModel = ViewModelProviders.of(this).get(EasyMapsViewModel::class.java)
 
         googleMapController = GoogleMapController()
 
+        navController = Navigation.findNavController(view)
 
         googleMapController.addIdleListener(GoogleMap.OnCameraIdleListener {
             googleMapController.getMap()?.let { map ->
@@ -79,54 +98,50 @@ class EasyMapsActivity : AppCompatActivity() {
             bundle.putString(BackgroundLocationTrackingService.SESSION_ID, uuid)
 
             backgroundLocationTrackingServiceIntent.putExtras(bundle)
-            startService(backgroundLocationTrackingServiceIntent)
+            activity?.startService(backgroundLocationTrackingServiceIntent)
         }
 
         btnStopTracking.setOnClickListener {
-            stopService(backgroundLocationTrackingServiceIntent)
+            activity?.stopService(backgroundLocationTrackingServiceIntent)
             showSyncLocationDialog()
 
         }
         btn_history.setOnClickListener {
-            HistoryViewerActivty.start(this)
+            context?.let { it1 -> navController.navigate(MapfragmentDirections.actionEasyMapsActivityToHistoryViewerActivty()) }
         }
 
         googleMapController.addIdleListener(locationMarkerView)
         googleMapController.addMoveStartListener(locationMarkerView)
 
-        locationLiveData = LocationLiveData(this@EasyMapsActivity)
-
-        locationLiveData.observe(this, Observer {
-            when (it?.status) {
-                LocationData.Status.PERMISSION_REQUIRED -> askLocationPermission(it.permissionList)
-                LocationData.Status.ENABLE_SETTINGS -> enableLocationSettings(it.resolvableApiException)
-                LocationData.Status.LOCATION_SUCCESS -> {
-                    it.location?.let { location ->
-                        updateUserLocation(location.latitude, location.longitude)
+        activity?.let {
+            locationLiveData = LocationLiveData(it)
+            locationLiveData.observe(viewLifecycleOwner, Observer {
+                when (it?.status) {
+                    LocationData.Status.PERMISSION_REQUIRED -> askLocationPermission(it.permissionList)
+                    LocationData.Status.ENABLE_SETTINGS -> enableLocationSettings(it.resolvableApiException)
+                    LocationData.Status.LOCATION_SUCCESS -> {
+                        it.location?.let { location ->
+                            updateUserLocation(location.latitude, location.longitude)
+                        }
                     }
                 }
-            }
-        })
+            })
+            locationMarkerView.initialize(
+                mapFragmentView = this.view,
+                bottomSheetExpandedHeight = R.dimen.size_form_full_height,
+                bottomSheetCollapsedHeight = R.dimen.size_form_peek_height
+            )
 
-        with(supportFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment) {
-            findViewById<LocationMarkerView>(R.id.locationMarkerView)
-                .initialize(
-                    mapFragmentView = this.view,
-                    bottomSheetExpandedHeight = R.dimen.size_form_full_height,
-                    bottomSheetCollapsedHeight = R.dimen.size_form_peek_height
-                )
-
-            getMapAsync { map ->
-                googleMapController.setGoogleMap(map)
-                locationLiveData.start()
-            }
+            mapView = map
+            mapView.onCreate(savedInstanceState)
+            mapView.onResume()
+            mapView.getMapAsync(this)
         }
     }
 
     private fun showSyncLocationDialog() {
-        val builder = AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(activity)
         builder.let {
-            title = "Done With Run"
             it.setMessage("Do you want to sync location to server?")
             it.setPositiveButton("YES") { dialog, which ->
                 mockSyncLocation()
@@ -141,16 +156,17 @@ class EasyMapsActivity : AppCompatActivity() {
     }
 
     private fun mockSyncLocation() {
-        Toast.makeText(this, "Syncing Location to server", Toast.LENGTH_SHORT)
+        Toast.makeText(activity, "Syncing Location to server", Toast.LENGTH_SHORT)
             .show()
         Coroutines.ioThenMain({
+
             val locations =
                 db.locationHistoryDoa().getPendingSyncedLocation()
             locations.forEach { it.isUpdated = true }
             db.locationHistoryDoa().update(locations)
             locations.size
         }) {
-            Toast.makeText(this, "Syncing Completed updated $it", Toast.LENGTH_SHORT)
+            Toast.makeText(activity, "Syncing Completed updated $it", Toast.LENGTH_SHORT)
                 .show()
         }
 
@@ -179,15 +195,17 @@ class EasyMapsActivity : AppCompatActivity() {
     }
 
     private fun askLocationPermission(permissionList: Array<String?>) {
-        ActivityCompat.requestPermissions(
-            this,
-            permissionList,
-            REQUEST_CODE_LOCATION_PERMISSION
-        )
+        activity?.let {
+            ActivityCompat.requestPermissions(
+                it,
+                permissionList,
+                REQUEST_CODE_LOCATION_PERMISSION
+            )
+        }
     }
 
     private fun enableLocationSettings(exception: ResolvableApiException?) {
-        exception?.startResolutionForResult(this, REQUEST_CODE_LOCATION_SETTINGS)
+        exception?.startResolutionForResult(activity, REQUEST_CODE_LOCATION_SETTINGS)
     }
 
     @SuppressLint("MissingPermission")
@@ -225,11 +243,18 @@ class EasyMapsActivity : AppCompatActivity() {
             selectedAddressInfo: SelectedAddressInfo? = null,
             validateFields: Boolean
         ): Intent {
-            return Intent(context, EasyMapsActivity::class.java)
+            return Intent(context, Mapfragment::class.java)
                 .apply {
                     putExtra(KEY_SELECTED_ADDRESS, selectedAddressInfo)
                     putExtra(KEY_VALIDATE_FIELDS, validateFields)
                 }
+        }
+    }
+
+    override fun onMapReady(map: GoogleMap?) {
+        map?.let {
+            googleMap = it
+            googleMapController.setGoogleMap(it)
         }
     }
 }

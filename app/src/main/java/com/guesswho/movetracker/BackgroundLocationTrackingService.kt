@@ -12,7 +12,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.*
 import com.guesswho.movetracker.database.LocationHistoryDatabase
-import com.guesswho.movetracker.ui.EasyMapsActivity
+import com.guesswho.movetracker.ui.Mapfragment
 import com.guesswho.movetracker.util.Coroutines
 import com.guesswho.movetracker.util.DataManager
 import com.guesswho.movetracker.util.PermissionUtils
@@ -130,7 +130,7 @@ class BackgroundLocationTrackingService : Service() {
                 sessionId = it.getString(SESSION_ID, "")
             }
         }
-        val notificationIntent = Intent(this, EasyMapsActivity::class.java)
+        val notificationIntent = Intent(this, Mapfragment::class.java)
         createNotificationChannel()
         val pendingIntent = PendingIntent.getActivity(
             this,
