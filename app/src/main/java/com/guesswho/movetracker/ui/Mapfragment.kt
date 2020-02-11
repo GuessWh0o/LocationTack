@@ -25,7 +25,6 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.guesswho.movetracker.BackgroundLocationTrackingService
 import com.guesswho.movetracker.R
-import com.guesswho.movetracker.data.SelectedAddressInfo
 import com.guesswho.movetracker.database.LocationHistoryDatabase
 import com.guesswho.movetracker.location.livedata.LocationData
 import com.guesswho.movetracker.location.livedata.LocationLiveData
@@ -60,7 +59,6 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
     private lateinit var mContext: Context
 
     private lateinit var mapView: MapView
-    private lateinit var googleMap: GoogleMap
     override fun onAttach(context: Context) {
         super.onAttach(context)
         mContext = context
@@ -78,8 +76,11 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         easyMapsViewModel = ViewModelProviders.of(this).get(EasyMapsViewModel::class.java)
-
         googleMapController = GoogleMapController()
+        mapView = map
+        mapView.onCreate(savedInstanceState)
+        mapView.onResume()
+        mapView.getMapAsync(this)
 
         navController = Navigation.findNavController(view)
 
@@ -132,10 +133,7 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
                 bottomSheetCollapsedHeight = R.dimen.size_form_peek_height
             )
 
-            mapView = map
-            mapView.onCreate(savedInstanceState)
-            mapView.onResume()
-            mapView.getMapAsync(this)
+
         }
     }
 
@@ -230,31 +228,14 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
     }
 
     companion object {
-
-        const val KEY_SELECTED_ADDRESS = "KEY_SELECTED_ADDRESS"
-        const val KEY_VALIDATE_FIELDS = "KEY_VALIDATE_FIELDS"
-
         const val REQUEST_CODE_LOCATION_PERMISSION = 12
         const val REQUEST_CODE_LOCATION_SETTINGS = 13
-
-        @JvmStatic
-        fun newIntent(
-            context: Context,
-            selectedAddressInfo: SelectedAddressInfo? = null,
-            validateFields: Boolean
-        ): Intent {
-            return Intent(context, Mapfragment::class.java)
-                .apply {
-                    putExtra(KEY_SELECTED_ADDRESS, selectedAddressInfo)
-                    putExtra(KEY_VALIDATE_FIELDS, validateFields)
-                }
-        }
     }
 
     override fun onMapReady(map: GoogleMap?) {
         map?.let {
-            googleMap = it
             googleMapController.setGoogleMap(it)
+            locationLiveData.start()
         }
     }
 }

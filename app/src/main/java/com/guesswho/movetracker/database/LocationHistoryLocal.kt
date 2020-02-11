@@ -8,11 +8,11 @@ import androidx.room.*
 data class LocationHistory(
     @ColumnInfo(name = "lat")
     @Nullable
-    var lat: Double? = 0.0,
+    var lat: Double = 0.0,
 
     @ColumnInfo(name = "long")
     @Nullable
-    var long: Double? = 0.0,
+    var longitude: Double = 0.0,
 
     @ColumnInfo(name = "speed")
     @Nullable
@@ -51,6 +51,10 @@ interface LocationHistoryDoa : BaseDao<LocationHistory> {
 
     @Query("DELETE FROM locationhistory")
     fun deleteAll()
+
+    @Query("select * from locationhistory where session_id=:sessionId")
+    fun getLocationForSession(sessionId: String): List<LocationHistory>
+
 
 }
 

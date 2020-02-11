@@ -63,14 +63,14 @@ class BackgroundLocationTrackingService : Service() {
     }
 
     private fun calculateDistance(location: Location) {
-        /*  var distanceInMeters = -1f
-          lastLocation?.let {
-              distanceInMeters = it.distanceTo(location)
-          }
-          if (distanceInMeters < 0 || distanceInMeters > 1) {*/
-        lastLocation = location
-        saveLocation(location)
-        // }
+        var distanceInMeters = -1f
+        lastLocation?.let {
+            distanceInMeters = it.distanceTo(location)
+        }
+        if (distanceInMeters < 0 || distanceInMeters > 1) {
+            lastLocation = location
+            saveLocation(location)
+        }
     }
 
     private fun saveLocation(location: Location) {
