@@ -7,7 +7,8 @@ class LocationData private constructor(val status: Status,
                                        val location: Location? = null,
                                        val exception: Exception? = null,
                                        val resolvableApiException: ResolvableApiException? = null,
-                                       val permissionList: Array<String?> = emptyArray()) {
+                                       val permissionList: List<String> = emptyList()
+) {
 
     enum class Status {
         LOCATION_SUCCESS, ERROR, PERMISSION_REQUIRED, ENABLE_SETTINGS
@@ -24,7 +25,7 @@ class LocationData private constructor(val status: Status,
         }
 
         fun permissionRequired(permissionList: List<String>): LocationData {
-            return LocationData(Status.PERMISSION_REQUIRED, permissionList = permissionList.toTypedArray())
+            return LocationData(Status.PERMISSION_REQUIRED, permissionList = permissionList)
         }
 
         fun settingsRequired(exception: ResolvableApiException): LocationData {

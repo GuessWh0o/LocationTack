@@ -11,7 +11,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -30,7 +29,11 @@ import com.guesswho.movetracker.location.livedata.LocationData
 import com.guesswho.movetracker.location.livedata.LocationLiveData
 import com.guesswho.movetracker.location.map.GoogleMapController
 import com.guesswho.movetracker.util.Coroutines
-import com.guesswho.movetracker.util.PermissionUtils
+import com.karumi.dexter.Dexter
+import com.karumi.dexter.MultiplePermissionsReport
+import com.karumi.dexter.PermissionToken
+import com.karumi.dexter.listener.PermissionRequest
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 import kotlinx.android.synthetic.main.activity_easy_maps.*
 import java.util.*
 
@@ -127,6 +130,7 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
                     }
                 }
             })
+            locationLiveData.start()
             locationMarkerView.initialize(
                 mapFragmentView = this.view,
                 bottomSheetExpandedHeight = R.dimen.size_form_full_height,
@@ -174,17 +178,6 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (PermissionUtils.isPermissionResultsGranted(grantResults)) {
-            locationLiveData.start()
-        }
-    }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_LOCATION_SETTINGS && resultCode == Activity.RESULT_OK) {
@@ -192,14 +185,23 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    private fun askLocationPermission(permissionList: Array<String?>) {
-        activity?.let {
-            ActivityCompat.requestPermissions(
-                it,
-                permissionList,
-                REQUEST_CODE_LOCATION_PERMISSION
-            )
-        }
+    private fun askLocationPermission(permissionList: List<String>) {
+        Dexter.withActivity(activity)
+            .withPermissions(permissionList)
+            .withListener(object : MultiplePermissionsListener {
+                override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
+                    report?.areAllPermissionsGranted()?.let {
+                        locationLiveData.start()
+                    }
+                }
+
+                override fun onPermissionRationaleShouldBeShown(
+                    permissions: MutableList<PermissionRequest>?,
+                    token: PermissionToken?
+                ) {
+                }
+
+            }).check()
     }
 
     private fun enableLocationSettings(exception: ResolvableApiException?) {
@@ -235,7 +237,6 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(map: GoogleMap?) {
         map?.let {
             googleMapController.setGoogleMap(it)
-            locationLiveData.start()
         }
     }
 }

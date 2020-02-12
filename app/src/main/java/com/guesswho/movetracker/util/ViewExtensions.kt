@@ -3,6 +3,8 @@ package com.guesswho.movetracker.util
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 
 inline fun <T : View> T.afterMeasured(crossinline f: T.() -> Unit) {
     viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
@@ -27,7 +29,5 @@ fun View.updateMargins(left: Int? = null, top: Int? = null, right: Int? = null, 
     invalidate()
 }
 
-inline fun <T, K> Iterable<T>.distinctBy(
-    selector: (T) -> K
-) {
-}
+inline fun <reified T : Fragment> FragmentManager.findFragmentByClass(): T? =
+    fragments.firstOrNull { it is T } as T?
