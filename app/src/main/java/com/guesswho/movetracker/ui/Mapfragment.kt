@@ -5,6 +5,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -12,8 +13,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import com.google.android.gms.common.api.ResolvableApiException
@@ -44,7 +45,7 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var locationLiveData: LocationLiveData
 
-    private lateinit var easyMapsViewModel: EasyMapsViewModel
+    private val easyMapsViewModel: EasyMapsViewModel by viewModels()
 
     private var isMapsInitialized = false
 
@@ -57,6 +58,14 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
         )
     }
 
+    private var isServiceRunning: Boolean
+        get() = sharedPreferences.getBoolean("ServiceRunning", false)
+        set(value) {
+            sharedPreferences.edit().putBoolean("ServiceRunning", value).apply()
+        }
+
+    private lateinit var sharedPreferences: SharedPreferences
+
     private lateinit var navController: NavController
 
     private lateinit var mContext: Context
@@ -64,6 +73,7 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
     private lateinit var mapView: MapView
     override fun onAttach(context: Context) {
         super.onAttach(context)
+        sharedPreferences = context.getSharedPreferences("map_prefs", Context.MODE_PRIVATE)
         mContext = context
     }
 
@@ -78,7 +88,6 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
     @SuppressLint("CheckResult")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        easyMapsViewModel = ViewModelProviders.of(this).get(EasyMapsViewModel::class.java)
         googleMapController = GoogleMapController()
         mapView = map
         mapView.onCreate(savedInstanceState)
@@ -96,20 +105,22 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
         })
 
 
-        buttonBackgroundTracking.setOnClickListener {
-            val uuid = UUID.randomUUID().toString()
-            val bundle = Bundle()
-            bundle.putString(BackgroundLocationTrackingService.SESSION_ID, uuid)
-
-            backgroundLocationTrackingServiceIntent.putExtras(bundle)
-            activity?.startService(backgroundLocationTrackingServiceIntent)
+        btn_start_stop.setOnClickListener {
+            if (isServiceRunning) {
+                btn_start_stop.setImageResource(R.drawable.ic_start)
+                activity?.stopService(backgroundLocationTrackingServiceIntent)
+                showSyncLocationDialog()
+            } else {
+                btn_start_stop.setImageResource(R.drawable.ic_stop)
+                val uuid = UUID.randomUUID().toString()
+                val bundle = Bundle()
+                bundle.putString(BackgroundLocationTrackingService.SESSION_ID, uuid)
+                backgroundLocationTrackingServiceIntent.putExtras(bundle)
+                activity?.startService(backgroundLocationTrackingServiceIntent)
+            }
+            isServiceRunning = !isServiceRunning
         }
 
-        btnStopTracking.setOnClickListener {
-            activity?.stopService(backgroundLocationTrackingServiceIntent)
-            showSyncLocationDialog()
-
-        }
         btn_history.setOnClickListener {
             context?.let { it1 -> navController.navigate(MapfragmentDirections.actionEasyMapsActivityToHistoryViewerActivty()) }
         }
@@ -136,9 +147,13 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
                 bottomSheetExpandedHeight = R.dimen.size_form_full_height,
                 bottomSheetCollapsedHeight = R.dimen.size_form_peek_height
             )
-
-
         }
+    }
+
+
+    override fun onResume() {
+        super.onResume()
+        btn_start_stop.setImageResource(if(isServiceRunning) R.drawable.ic_stop else R.drawable.ic_start)
     }
 
     private fun showSyncLocationDialog() {

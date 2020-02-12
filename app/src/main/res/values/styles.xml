@@ -37,4 +37,12 @@
         <item name="android:layout_height">wrap_content</item>
     </style>
 
+
+    <style name="DetailCardStyle">
+        <item name="android:layout_rowWeight">1</item>
+        <item name="android:layout_columnWeight">1</item>
+        <item name="android:gravity">fill</item>
+        <item name="android:layout_margin">4dp</item>
+    </style>
+
 </resources>

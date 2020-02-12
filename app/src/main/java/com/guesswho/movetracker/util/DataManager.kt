@@ -23,7 +23,7 @@ object DataManager {
                     sessionId
                 )
             db.locationHistoryDoa().insert(locationHistory)
-            Log.d("Size in databse", "" + getLocationHistory(db).size)
+            Log.d("Size in database", "" + getLocationHistory(db).size)
         }
     }
 
@@ -38,7 +38,7 @@ object DataManager {
     }
 
     @WorkerThread
-    fun latLongListfroSession(
+    fun latLongListForSession(
         sessionId: String,
         db: LocationHistoryDatabase
     ): MutableList<LatLng> {
@@ -48,5 +48,10 @@ object DataManager {
         return latlongs
     }
 
+    @WorkerThread
+    fun getLocationHistoryForSession(
+        sessionId: String,
+        db: LocationHistoryDatabase
+    ): List<LocationHistory> = db.locationHistoryDoa().getLocationForSession(sessionId)
 
 }
