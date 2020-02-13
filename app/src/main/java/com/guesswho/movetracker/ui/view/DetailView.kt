@@ -13,16 +13,17 @@ import kotlinx.android.synthetic.main.card_ride_detail.view.*
  *
  * @author Maxim on 2020-02-12
  */
-class DetailView (context: Context, attributeSet: AttributeSet?) : CardView(context, attributeSet) {
+class DetailView(context: Context, attributeSet: AttributeSet?) : CardView(context, attributeSet) {
 
-    lateinit var tvTitle: TextView
+    private lateinit var tvTitle: TextView
 
     init {
         inflate(context, R.layout.card_ride_detail, this)
         context.theme.obtainStyledAttributes(
             attributeSet,
             R.styleable.CardDetail,
-            0, 0).apply {
+            0, 0
+        ).apply {
             try {
                 val title = this.getStringOrThrow(R.styleable.CardDetail_title)
                 val detail = this.getStringOrThrow(R.styleable.CardDetail_detail)
@@ -39,6 +40,7 @@ class DetailView (context: Context, attributeSet: AttributeSet?) : CardView(cont
     }
 
     fun setTitle(text: String) {
+        tvTitle.text = text
         invalidate()
     }
 }

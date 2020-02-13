@@ -67,8 +67,6 @@ class HistoryFragment : Fragment(), OnMapReadyCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         navController = Navigation.findNavController(view)
-
-        Log.d("Session  id", sessionId)
         mapView = mapHistory
         mapView.onCreate(savedInstanceState)
         mapView.onResume()
@@ -111,7 +109,7 @@ class HistoryFragment : Fragment(), OnMapReadyCallback {
             builder.include(p.points[i])
         }
         val bounds = builder.build()
-        val padding = 0 // offset from edges of the map in pixels
+        val padding = 30 // offset from edges of the map in pixels
         val cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding)
         map.animateCamera(CameraUpdateFactory.zoomOut())
         map.animateCamera(cameraUpdate)

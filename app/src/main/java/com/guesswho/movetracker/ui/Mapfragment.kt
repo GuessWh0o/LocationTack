@@ -153,7 +153,7 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
 
     override fun onResume() {
         super.onResume()
-        btn_start_stop.setImageResource(if(isServiceRunning) R.drawable.ic_stop else R.drawable.ic_start)
+        btn_start_stop.setImageResource(if (isServiceRunning) R.drawable.ic_stop else R.drawable.ic_start)
     }
 
     private fun showSyncLocationDialog() {
@@ -226,20 +226,14 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     private fun updateUserLocation(latitude: Double?, longitude: Double?) {
         googleMapController.getMap()?.let { map ->
-            if (isMapsInitialized.not()) {
-                isMapsInitialized = true
-                map.isMyLocationEnabled = true
-                map.uiSettings.isMyLocationButtonEnabled = true
-                map.moveCamera(
-                    CameraUpdateFactory.newLatLngZoom(
-                        LatLng(
-                            latitude ?: 0.0,
-                            longitude ?: 0.0
-                        ), 14.0f
-                    )
+            map.moveCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(
+                        latitude ?: 0.0,
+                        longitude ?: 0.0
+                    ), 14.0f
                 )
-            }
-
+            )
             easyMapsViewModel.updateLatLong(LatLng(latitude ?: 0.0, longitude ?: 0.0))
         }
     }
@@ -252,6 +246,8 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(map: GoogleMap?) {
         map?.let {
             googleMapController.setGoogleMap(it)
+            map.isMyLocationEnabled = true
+            map.uiSettings.isMyLocationButtonEnabled = true
         }
     }
 }

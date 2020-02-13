@@ -8,30 +8,28 @@
     <com.google.android.gms.maps.MapView
         android:id="@+id/mapHistory"
         android:layout_width="match_parent"
-        android:layout_height="400dp"
-        android:layout_margin="@dimen/margin_16dp"
+        android:layout_height="0dp"
+        android:background="@color/color_gray_super_light"
         app:layout_constraintBottom_toTopOf="@+id/guideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:background="@color/color_gray_super_light">
+        app:layout_constraintTop_toTopOf="parent">
 
-       <FrameLayout
-           android:layout_width="match_parent"
-           android:layout_height="match_parent">
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <TextView
                 android:id="@+id/tv_distance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_margin="@dimen/margin_16dp"
+                android:text="@string/ui_km"
                 android:textColor="@color/color_white"
                 android:textSize="32sp"
-                android:textStyle="bold"
-                android:text="@string/ui_km"
-                android:layout_margin="@dimen/margin_16dp">
-            </TextView>
+                android:textStyle="bold"></TextView>
 
-       </FrameLayout>
+        </FrameLayout>
     </com.google.android.gms.maps.MapView>
 
     <androidx.constraintlayout.widget.Guideline
@@ -40,7 +38,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintGuide_percent="0.65"
+        app:layout_constraintGuide_percent="0.47"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
