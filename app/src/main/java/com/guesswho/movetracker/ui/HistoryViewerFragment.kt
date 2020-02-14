@@ -11,7 +11,8 @@ import androidx.navigation.Navigation
 import com.guesswho.movetracker.R
 import com.guesswho.movetracker.database.LocationHistoryDatabase
 import com.guesswho.movetracker.util.Coroutines
-import kotlinx.android.synthetic.main.activity_history_viewer_activty.*
+import com.guesswho.movetracker.util.DataManager
+import kotlinx.android.synthetic.main.fragment_history_viewer.*
 
 class HistoryViewerFragment : Fragment() {
 
@@ -28,20 +29,17 @@ class HistoryViewerFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.activity_history_viewer_activty, container, false)
+    ): View? = inflater.inflate(R.layout.fragment_history_viewer, container, false)
 
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         navController = Navigation.findNavController(view)
         Coroutines.ioThenMain({
-            db.locationHistoryDoa().getAll()
+            DataManager.getLocationHistory(db)
         }, {
             it?.let {
-                val locationSource = it.distinctBy { it.session }
-                val adapter = HistoryListAdapter(locationSource) {
+                val adapter = HistoryListAdapter(it) {
                     val action =
                         HistoryViewerFragmentDirections.actionHistoryViewerActivtyToHistoryFragment3()
                     action.sessionId = it.session.toString()

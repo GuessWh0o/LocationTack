@@ -16,10 +16,23 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         val navHostFragment = supportFragmentManager.fragments.first() as? NavHostFragment
-        if (navHostFragment != null) {
-            val childFragments = navHostFragment.childFragmentManager.fragments
-            childFragments.forEach { fragment ->
+        navHostFragment?.let {
+            it.childFragmentManager.fragments.forEach { fragment ->
                 fragment.onActivityResult(requestCode, resultCode, data)
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        val navHostFragment = supportFragmentManager.fragments.first() as? NavHostFragment
+        navHostFragment?.let {
+            it.childFragmentManager.fragments.forEach { fragment ->
+                fragment.onRequestPermissionsResult(requestCode, permissions, grantResults)
             }
         }
     }

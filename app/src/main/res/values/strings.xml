@@ -1,25 +1,9 @@
 <resources>
-    <string name="app_name">My Application</string>
-    <string name="title_activity_maps">Map</string>
-    <string name="title_toolbar_easy_map">Select Address</string>
-    <string name="hint_search_address">Search address</string>
-
-    <string name="hint_address_type">Type</string>
-    <string name="hint_address_title">Address title</string>
-    <string name="hint_address">Address</string>
-    <string name="hint_building_number">Building No</string>
-    <string name="hint_floor_number">Floor</string>
-    <string name="hint_door_number">Door</string>
-    <string name="hint_address_description">Description</string>
-
-
-    <string name="save_address">Save</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="app_name">Max Run</string>
     <string name="ui_button_details">Details and Splits</string>
     <string name="ui_km">%1$f \nKm</string>
-    <string name="stoptracking">StopTracking</string>
+    <string name="stop_tracking">StopTracking</string>
     <string name="history">History</string>
     <string name="start_tracking">Start Tracking</string>
+    <string name="est_calories">Est. Calories</string>
 </resources>

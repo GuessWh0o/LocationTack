@@ -76,8 +76,7 @@ class BackgroundLocationTrackingService : Service() {
     private fun saveLocation(location: Location) {
         Coroutines.io {
             DataManager.saveLocation(
-                db,
-                location, sessionId
+                db, location, sessionId
             )
         }
     }
@@ -105,7 +104,6 @@ class BackgroundLocationTrackingService : Service() {
         val settingsTask = settingsClient.checkLocationSettings(locationSettingsBuilder.build())
         settingsTask.addOnSuccessListener {
             fusedLocationClient.lastLocation.addOnSuccessListener {
-                it?.let { calculateDistance(it) }
                 fusedLocationClient.requestLocationUpdates(
                     locationRequest,
                     fineLocationCallback,

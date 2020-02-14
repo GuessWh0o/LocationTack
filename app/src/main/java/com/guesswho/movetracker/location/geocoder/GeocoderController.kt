@@ -6,7 +6,6 @@ import android.location.Address
 import android.location.Geocoder
 import android.util.Log
 import com.google.android.gms.maps.model.LatLng
-import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -53,8 +52,6 @@ class GeocoderController(context: Context) {
     fun updateAddress(latLong: LatLng) {
         latLongSubject.onNext(latLong)
     }
-
-    fun getAddressObservable(): Observable<Address> = addressSubject
 
     fun destroy() {
         geocoderDisposable?.let {

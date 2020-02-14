@@ -1,12 +1,15 @@
 package com.guesswho.movetracker.location.map
 
 import android.annotation.SuppressLint
-import android.graphics.Point
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.Polyline
+import com.google.android.gms.maps.model.PolylineOptions
+import com.guesswho.movetracker.R
 
-class GoogleMapController(val mapZoomLevel: Float = 14f) {
+class GoogleMapController {
 
     private var googleMap: GoogleMap? = null
 
@@ -18,29 +21,42 @@ class GoogleMapController(val mapZoomLevel: Float = 14f) {
 
     fun setGoogleMap(googleMap: GoogleMap) {
         this.googleMap = googleMap
-        with(this.googleMap!!) {
+        this.googleMap?.apply {
             setOnCameraIdleListener { notifyCameraIdle() }
             setOnCameraMoveStartedListener { notifyCameraMoveStart(it) }
             setOnMapClickListener { notifyMapClicked(it) }
         }
+
     }
 
     fun getMap(): GoogleMap? = googleMap
 
-    fun animateCameraToPoint(screenPoint: Point, onStarted: () -> Unit = {}, onFinished: () -> (Unit) = {}) {
-        onStarted.invoke()
-        val pointLatLng = googleMap?.projection?.fromScreenLocation(screenPoint)
-        val zoomLevel = googleMap?.cameraPosition?.zoom ?: mapZoomLevel
-        val updateFactory = CameraUpdateFactory.newLatLngZoom(pointLatLng, zoomLevel)
-        googleMap?.animateCamera(updateFactory, 150, object : SimpleCancellableCallback() {
-            override fun onFinish() {
-                onFinished.invoke()
-            }
-        })
+
+    fun addPolyline(latlangs: List<LatLng>) {
+        googleMap?.apply {
+            val polyline = addPolyline(
+                PolylineOptions()
+                    .clickable(true)
+                    .color(R.color.polyline)
+                    .addAll(latlangs)
+            )
+            moveToBounds(polyline)
+        }
     }
 
-    fun animateCamera(latitude: Double, longitude: Double) {
-        googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), 14.0f))
+    private fun moveToBounds(p: Polyline) {
+        val builder = LatLngBounds.Builder()
+        for (i in p.points.indices) {
+            builder.include(p.points[i])
+        }
+        val bounds = builder.build()
+        val padding = 30 // offset from edges of the map in pixels
+        val cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding)
+        googleMap?.apply {
+            animateCamera(CameraUpdateFactory.zoomOut())
+            animateCamera(cameraUpdate)
+        }
+
     }
 
     @SuppressLint("MissingPermission")
@@ -68,12 +84,6 @@ class GoogleMapController(val mapZoomLevel: Float = 14f) {
     fun addIdleListener(idleListener: GoogleMap.OnCameraIdleListener) {
         if (cameraIdleListeners.contains(idleListener).not()) {
             cameraIdleListeners.add(idleListener)
-        }
-    }
-
-    fun addClickListener(clickListener: GoogleMap.OnMapClickListener) {
-        if (mapClickListeners.contains(clickListener).not()) {
-            mapClickListeners.add(clickListener)
         }
     }
 

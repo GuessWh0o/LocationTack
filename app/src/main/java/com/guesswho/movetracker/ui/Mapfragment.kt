@@ -12,6 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -20,36 +21,29 @@ import androidx.navigation.Navigation
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.guesswho.movetracker.BackgroundLocationTrackingService
 import com.guesswho.movetracker.R
-import com.guesswho.movetracker.database.LocationHistoryDatabase
+import com.guesswho.movetracker.R.dimen.size_form_full_height
+import com.guesswho.movetracker.R.dimen.size_form_peek_height
 import com.guesswho.movetracker.location.livedata.LocationData
 import com.guesswho.movetracker.location.livedata.LocationLiveData
 import com.guesswho.movetracker.location.map.GoogleMapController
 import com.guesswho.movetracker.util.Coroutines
-import com.karumi.dexter.Dexter
-import com.karumi.dexter.MultiplePermissionsReport
-import com.karumi.dexter.PermissionToken
-import com.karumi.dexter.listener.PermissionRequest
-import com.karumi.dexter.listener.multi.MultiplePermissionsListener
-import kotlinx.android.synthetic.main.activity_easy_maps.*
+import com.guesswho.movetracker.util.PermissionUtils
+import kotlinx.android.synthetic.main.fragment_map.*
 import java.util.*
 
 
 class Mapfragment : Fragment(), OnMapReadyCallback {
 
-    private lateinit var googleMapController: GoogleMapController
+    private val googleMapController by lazy { GoogleMapController() }
 
     private lateinit var locationLiveData: LocationLiveData
 
-    private val easyMapsViewModel: EasyMapsViewModel by viewModels()
+    private val mapViewModel: MapViewModel by viewModels()
 
-    private var isMapsInitialized = false
-
-    private val db by lazy { LocationHistoryDatabase(mContext) }
 
     private val backgroundLocationTrackingServiceIntent by lazy {
         Intent(
@@ -68,31 +62,23 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var navController: NavController
 
-    private lateinit var mContext: Context
-
-    private lateinit var mapView: MapView
     override fun onAttach(context: Context) {
         super.onAttach(context)
         sharedPreferences = context.getSharedPreferences("map_prefs", Context.MODE_PRIVATE)
-        mContext = context
     }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.activity_easy_maps, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_map, container, false)
 
     @SuppressLint("CheckResult")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        googleMapController = GoogleMapController()
-        mapView = map
-        mapView.onCreate(savedInstanceState)
-        mapView.onResume()
-        mapView.getMapAsync(this)
+        mapViewDashboard.onCreate(savedInstanceState)
+        mapViewDashboard.onResume()
+        mapViewDashboard.getMapAsync(this)
 
         navController = Navigation.findNavController(view)
 
@@ -100,18 +86,18 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
             googleMapController.getMap()?.let { map ->
                 val markerPoint = locationMarkerView.getMarkerPoint()
                 val markerLatLong = map.projection.fromScreenLocation(markerPoint)
-                easyMapsViewModel.updateLatLong(markerLatLong)
+                mapViewModel.updateLatLong(markerLatLong)
             }
         })
 
 
-        btn_start_stop.setOnClickListener {
+        btnTrackLocationServiceController.setOnClickListener {
             if (isServiceRunning) {
-                btn_start_stop.setImageResource(R.drawable.ic_start)
+                btnTrackLocationServiceController.setImageResource(R.drawable.ic_start)
                 activity?.stopService(backgroundLocationTrackingServiceIntent)
                 showSyncLocationDialog()
             } else {
-                btn_start_stop.setImageResource(R.drawable.ic_stop)
+                btnTrackLocationServiceController.setImageResource(R.drawable.ic_stop)
                 val uuid = UUID.randomUUID().toString()
                 val bundle = Bundle()
                 bundle.putString(BackgroundLocationTrackingService.SESSION_ID, uuid)
@@ -122,14 +108,14 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
         }
 
         btn_history.setOnClickListener {
-            context?.let { it1 -> navController.navigate(MapfragmentDirections.actionEasyMapsActivityToHistoryViewerActivty()) }
+            navController.navigate(MapfragmentDirections.actionEasyMapsActivityToHistoryViewerActivty())
         }
 
         googleMapController.addIdleListener(locationMarkerView)
         googleMapController.addMoveStartListener(locationMarkerView)
 
-        activity?.let {
-            locationLiveData = LocationLiveData(it)
+        activity?.let { activity ->
+            locationLiveData = LocationLiveData(activity)
             locationLiveData.observe(viewLifecycleOwner, Observer {
                 when (it?.status) {
                     LocationData.Status.PERMISSION_REQUIRED -> askLocationPermission(it.permissionList)
@@ -139,13 +125,15 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
                             updateUserLocation(location.latitude, location.longitude)
                         }
                     }
+                    else -> {
+                    }
                 }
             })
             locationLiveData.start()
             locationMarkerView.initialize(
                 mapFragmentView = this.view,
-                bottomSheetExpandedHeight = R.dimen.size_form_full_height,
-                bottomSheetCollapsedHeight = R.dimen.size_form_peek_height
+                bottomSheetExpandedHeight = size_form_full_height,
+                bottomSheetCollapsedHeight = size_form_peek_height
             )
         }
     }
@@ -153,18 +141,18 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
 
     override fun onResume() {
         super.onResume()
-        btn_start_stop.setImageResource(if (isServiceRunning) R.drawable.ic_stop else R.drawable.ic_start)
+        btnTrackLocationServiceController.setImageResource(if (isServiceRunning) R.drawable.ic_stop else R.drawable.ic_start)
     }
 
     private fun showSyncLocationDialog() {
         val builder = AlertDialog.Builder(activity)
         builder.let {
             it.setMessage("Do you want to sync location to server?")
-            it.setPositiveButton("YES") { dialog, which ->
+            it.setPositiveButton("YES") { dialog, _ ->
                 mockSyncLocation()
                 dialog.dismiss()
             }
-            it.setNegativeButton("Cancel") { dialog, which ->
+            it.setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
             }
             val dialog: AlertDialog = it.create()
@@ -176,20 +164,11 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
         Toast.makeText(activity, "Syncing Location to server", Toast.LENGTH_SHORT)
             .show()
         Coroutines.ioThenMain({
-
-            val locations =
-                db.locationHistoryDoa().getPendingSyncedLocation()
-            locations.forEach { it.isUpdated = true }
-            db.locationHistoryDoa().update(locations)
-            locations.size
+            mapViewModel.syncLocation()
         }) {
+            Log.d("updated values", "")
             Toast.makeText(activity, "Syncing Completed updated $it", Toast.LENGTH_SHORT)
                 .show()
-        }
-
-        Coroutines.io {
-            val locationSource = db.locationHistoryDoa().getAll().distinctBy { it.session }
-            locationSource.forEach { Log.d("Session", it.session) }
         }
     }
 
@@ -200,41 +179,45 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    private fun askLocationPermission(permissionList: List<String>) {
-        Dexter.withActivity(activity)
-            .withPermissions(permissionList)
-            .withListener(object : MultiplePermissionsListener {
-                override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
-                    report?.areAllPermissionsGranted()?.let {
-                        locationLiveData.start()
-                    }
-                }
-
-                override fun onPermissionRationaleShouldBeShown(
-                    permissions: MutableList<PermissionRequest>?,
-                    token: PermissionToken?
-                ) {
-                }
-
-            }).check()
-    }
-
     private fun enableLocationSettings(exception: ResolvableApiException?) {
         exception?.startResolutionForResult(activity, REQUEST_CODE_LOCATION_SETTINGS)
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (PermissionUtils.isPermissionResultsGranted(grantResults)) {
+            locationLiveData.start()
+        }
+    }
+
+    private fun askLocationPermission(permissionList: Array<String?>) {
+        activity?.let {
+            ActivityCompat.requestPermissions(
+                it,
+                permissionList,
+                REQUEST_CODE_LOCATION_PERMISSION
+            )
+        }
+    }
+
     @SuppressLint("MissingPermission")
-    private fun updateUserLocation(latitude: Double?, longitude: Double?) {
+    private fun updateUserLocation(latitude: Double, longitude: Double) {
         googleMapController.getMap()?.let { map ->
             map.moveCamera(
                 CameraUpdateFactory.newLatLngZoom(
                     LatLng(
-                        latitude ?: 0.0,
-                        longitude ?: 0.0
+                        latitude,
+                        longitude
                     ), 14.0f
                 )
             )
-            easyMapsViewModel.updateLatLong(LatLng(latitude ?: 0.0, longitude ?: 0.0))
+            if (!map.isMyLocationEnabled)
+                map.isMyLocationEnabled = true
+            mapViewModel.updateLatLong(LatLng(latitude, longitude))
         }
     }
 
@@ -246,7 +229,6 @@ class Mapfragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(map: GoogleMap?) {
         map?.let {
             googleMapController.setGoogleMap(it)
-            map.isMyLocationEnabled = true
             map.uiSettings.isMyLocationButtonEnabled = true
         }
     }

@@ -76,12 +76,9 @@ class LocationLiveData(private val activity: Activity) : MediatorLiveData<Locati
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
         if (PermissionUtils.isLocationPermissionsGranted(activity).not()) {
-            value = LocationData.permissionRequired(
-                listOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
+            value =
+                LocationData.permissionRequired(listOf(Manifest.permission.ACCESS_FINE_LOCATION))
+
             return
         }
 

@@ -8,9 +8,6 @@
     <dimen name="margin_12dp">12dp</dimen>
     <dimen name="margin_16dp">16dp</dimen>
 
-    <dimen name="size_toolbar_height">56dp</dimen>
-    <dimen name="size_search_bar_height">48dp</dimen>
-
     <dimen name="size_marker">40dp</dimen>
     <dimen name="size_marker_layout">80dp</dimen>
 
@@ -23,10 +20,6 @@
     <dimen name="size_form_full_height">336dp</dimen>
 
     <dimen name="size_button_height">48dp</dimen>
-
-    <dimen name="size_address_type_field_width">100dp</dimen>
-
-    <dimen name="text_size_toolbar_title">14sp</dimen>
 
     <dimen name="text_size_xsmall">10sp</dimen>
     <dimen name="text_size_small">12sp</dimen>

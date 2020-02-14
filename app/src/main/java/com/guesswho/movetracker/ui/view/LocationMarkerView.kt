@@ -71,7 +71,7 @@ class LocationMarkerView @JvmOverloads constructor(
         }
     }
 
-    fun updateMarkerViewPosition(slideOffset: Float) {
+    private fun updateMarkerViewPosition(slideOffset: Float) {
         val mapCenterX = mapViewScreenRectF.width() / 2
         val mapCenterY = mapViewScreenRectF.height() / 2
 
@@ -94,30 +94,6 @@ class LocationMarkerView @JvmOverloads constructor(
         val pointX = locationInScreen[0].toFloat() + (measuredWidth / 2f)
         val pointY = (locationInScreen[1].toFloat() + measuredHeight) - mapViewScreenRectF.top
         return Point(pointX.toInt(), pointY.toInt())
-    }
-
-    fun getExpandedCameraPoint(): Point {
-        val mapCenterY = mapViewScreenRectF.height() / 2
-        val totalDifference = mapCenterY - markerTargetYPosition
-
-        val expandedCameraPositionX = (mapViewScreenRectF.width() / 2).toInt()
-        val expandedCameraPositionY = (mapCenterY + totalDifference).toInt()
-
-        return Point(expandedCameraPositionX, expandedCameraPositionY)
-    }
-
-    fun getCollapsedCameraPoint(): Point {
-        val mapCenterY = mapViewScreenRectF.height() / 2
-        val totalDifference = mapCenterY - markerTargetYPosition
-
-        val expandedCameraPositionX = (mapViewScreenRectF.width() / 2).toInt()
-        val expandedCameraPositionY = (mapCenterY - totalDifference).toInt()
-
-        return Point(expandedCameraPositionX, expandedCameraPositionY)
-    }
-
-    fun setFloatingOnMove(isFloatingMode: Boolean) {
-        this.isFloatingMode = isFloatingMode
     }
 
     private fun move() {

@@ -3,7 +3,6 @@ package com.guesswho.movetracker.data
 import android.location.Address
 import android.os.Parcel
 import android.os.Parcelable
-import com.google.android.gms.maps.model.LatLng
 
 data class SelectedAddressInfo(
     val addressTitle: String?,
@@ -36,13 +35,6 @@ data class SelectedAddressInfo(
 
     override fun describeContents(): Int {
         return 0
-    }
-
-    fun getLatLng(): LatLng {
-        address?.let {
-            return LatLng(it.latitude, it.longitude)
-        }
-        return LatLng(0.0, 0.0)
     }
 
     companion object CREATOR : Parcelable.Creator<SelectedAddressInfo> {
